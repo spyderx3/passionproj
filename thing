@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Skeleton — pose tracking for any video</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #13151A;
+    --bg-raised: #1B1E25;
+    --bone: #F2F0EB;
+    --slate: #8A8F98;
+    --accent: #C8FF4D;
+    --accent-dim: #8FB838;
+    --danger: #FF6B5E;
+    --border: #2A2E37;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--bone);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- Header ---------- */
+  header {
+    padding: 28px 0 0;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    color: var(--slate);
+  }
+  .brand-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 56px 0 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .skeleton-stage {
+    width: 180px;
+    height: 220px;
+    margin-bottom: 28px;
+  }
+
+  h1 {
+    font-size: 38px;
+    line-height: 1.12;
+    font-weight: 600;
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+  }
+  h1 .hl { color: var(--accent); }
+
+  .sub {
+    color: var(--slate);
+    font-size: 16px;
+    line-height: 1.55;
+    max-width: 440px;
+    margin: 0 0 4px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-dim);
+    margin-bottom: 14px;
+  }
+
+  /* ---------- Upload card ---------- */
+  .card {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    margin: 28px 0 20px;
+  }
+
+  .dropzone {
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    padding: 36px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease;
+  }
+  .dropzone:hover, .dropzone.drag {
+    border-color: var(--accent-dim);
+    background: rgba(200, 255, 77, 0.04);
+  }
+  .dropzone input { display: none; }
+
+  .dz-icon {
+    width: 36px;
+    height: 36px;
+    margin: 0 auto 14px;
+    color: var(--slate);
+  }
+
+  .dz-text {
+    font-size: 15px;
+    margin-bottom: 6px;
+  }
+  .dz-text strong { color: var(--accent); font-weight: 600; }
+
+  .dz-hint {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--slate);
+  }
+
+  .file-chosen {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 12px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .file-chosen.show { display: flex; }
+  .file-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--bone); }
+  .file-clear {
+    background: none;
+    border: none;
+    color: var(--slate);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .file-clear:hover { color: var(--danger); }
+
+  .btn {
+    width: 100%;
+    margin-top: 18px;
+    padding: 14px 20px;
+    border-radius: 8px;
+    border: none;
+    background: var(--accent);
+    color: #10130E;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: transform 0.12s ease, background 0.12s ease;
+  }
+  .btn:hover:not(:disabled) { background: #D6FF73; }
+  .btn:active:not(:disabled) { transform: scale(0.98); }
+  .btn:disabled {
+    background: var(--border);
+    color: var(--slate);
+    cursor: not-allowed;
+  }
+  .btn:focus-visible, .dropzone:focus-visible, .file-clear:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ---------- Progress ---------- */
+  .progress-block { display: none; margin-top: 18px; }
+  .progress-block.show { display: block; }
+
+  .progress-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--slate);
+  }
+  .progress-pct { color: var(--accent); }
+
+  .progress-track {
+    width: 100%;
+    height: 6px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+
+  .status-line {
+    margin-top: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--slate);
+  }
+
+  /* ---------- Result ---------- */
+  .result-block { display: none; margin-top: 18px; }
+  .result-block.show { display: block; }
+
+  video {
+    width: 100%;
+    border-radius: 8px;
+    background: #000;
+    display: block;
+    margin-bottom: 14px;
+  }
+
+  .result-actions { display: flex; gap: 10px; }
+  .btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--bone);
+  }
+  .btn-secondary:hover { border-color: var(--accent-dim); background: rgba(200,255,77,0.04); }
+
+  .error-block {
+    display: none;
+    margin-top: 18px;
+    padding: 14px;
+    background: rgba(255, 107, 94, 0.08);
+    border: 1px solid rgba(255, 107, 94, 0.35);
+    border-radius: 8px;
+    color: var(--danger);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+  }
+  .error-block.show { display: block; }
+
+  /* ---------- Footer / how it works ---------- */
+  .how {
+    border-top: 1px solid var(--border);
+    padding: 32px 0 60px;
+    color: var(--slate);
+  }
+  .how-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--slate);
+    margin-bottom: 16px;
+  }
+  .how-steps {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+  .how-step .num {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent-dim);
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .how-step p {
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin: 0;
+    color: var(--slate);
+  }
+
+  footer {
+    text-align: center;
+    padding: 0 0 36px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--border);
+  }
+
+  @media (max-width: 560px) {
+    h1 { font-size: 30px; }
+    .how-steps { grid-template-columns: 1fr; gap: 20px; }
+    .card { padding: 20px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <span class="brand-dot"></span>
+      SKELETON
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="skeleton-stage" id="skeletonStage">
+      <!-- filled by JS: idle calibration pose SVG -->
+    </div>
+
+    <div class="eyebrow">Pose tracking, no app required</div>
+    <h1>See the <span class="hl">motion</span><br>inside your video</h1>
+    <p class="sub">Upload a clip. We map every joint, frame by frame, and hand back the video with the skeleton drawn on top.</p>
+
+    <div class="card">
+      <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Choose a video file">
+        <svg class="dz-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 4v12m0-12l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="dz-text"><strong>Choose a video</strong> or drag it here</div>
+        <div class="dz-hint">MP4, MOV, AVI, MKV, WEBM — up to 100MB</div>
+        <input type="file" id="fileInput" accept=".mp4,.mov,.avi,.mkv,.webm" />
+      </div>
+
+      <div class="file-chosen" id="fileChosen">
+        <span class="file-name mono" id="fileName"></span>
+        <button class="file-clear" id="fileClear">Remove</button>
+      </div>
+
+      <button class="btn" id="submitBtn" disabled>Choose a video to begin</button>
+
+      <div class="progress-block" id="progressBlock">
+        <div class="progress-row">
+          <span id="progressLabel">Reading frames</span>
+          <span class="progress-pct"><span id="progressPct">0</span>%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="status-line" id="statusLine">This stays open while we track each frame — usually under a minute for short clips.</div>
+      </div>
+
+      <div class="result-block" id="resultBlock">
+        <video id="resultVideo" controls></video>
+        <div class="result-actions">
+          <a class="btn" id="downloadBtn" download="pose-tracked.mp4" style="text-decoration:none; text-align:center;">Download video</a>
+          <button class="btn btn-secondary" id="resetBtn">Track another</button>
+        </div>
+      </div>
+
+      <div class="error-block" id="errorBlock"></div>
+    </div>
+  </section>
+
+  <section class="how">
+    <div class="how-title">How it works</div>
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="num mono">01</div>
+        <p>Your video uploads directly to our server — nothing is shared elsewhere.</p>
+      </div>
+      <div class="how-step">
+        <div class="num mono">02</div>
+        <p>Every frame is scanned for body position and 33 joint points are located.</p>
+      </div>
+      <div class="how-step">
+        <div class="num mono">03</div>
+        <p>A new video is rendered with the skeleton overlaid, ready to download.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="mono">Files are removed from our server automatically after one hour.</footer>
+</div>
+
+<script src="skeleton.js"></script>
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
