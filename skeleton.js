@@ -38,33 +38,11 @@ function buildSkeletonSVG(active) {
   ).join('');
 
   return `
-  <svg viewBox="0 0 180 220" xmlns="http://www.w3.org/2000/svg" class="${active ? 'skeleton-active' : 'skeleton-idle'}">
-    <style>
-      .bone { stroke: var(--accent-dim); stroke-width: 1.6; opacity: 0.85; }
-      .joint { fill: var(--accent); }
-      .skeleton-idle .joint, .skeleton-idle .bone {
-        animation: breathe 3.2s ease-in-out infinite;
-      }
-      @keyframes breathe {
-        0%, 100% { opacity: 0.55; }
-        50% { opacity: 1; }
-      }
-      .bone-draw {
-        stroke-dasharray: 60;
-        stroke-dashoffset: 60;
-        animation: drawline 0.5s ease-out forwards;
-      }
-      @keyframes drawline {
-        to { stroke-dashoffset: 0; }
-      }
-      .skeleton-active .joint {
-        animation: pulse 0.8s ease-in-out infinite;
-      }
-      @keyframes pulse {
-        0%, 100% { r: 3.2; }
-        50% { r: 4.4; }
-      }
-    </style>
+  <svg 
+    viewBox="0 0 180 220" 
+    xmlns="http://www.w3.org/2000/svg" 
+    class="${active ? 'skeleton-active' : 'skeleton-idle'}">
+    
     ${lines}
     ${dots}
   </svg>`;
