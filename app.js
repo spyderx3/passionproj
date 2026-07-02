@@ -17,6 +17,7 @@ const errorBlock = document.getElementById('errorBlock');
 
 let selectedFile = null;
 let pollTimer = null;
+let wakeUpTimer = null;
 
 function showError(message) {
   errorBlock.textContent = message;
@@ -25,6 +26,7 @@ function showError(message) {
   submitBtn.disabled = false;
   submitBtn.textContent = 'Track this video';
   setSkeletonState(false);
+  if (wakeUpTimer) { clearTimeout(wakeUpTimer); wakeUpTimer = null; }
 }
 
 function clearError() {
@@ -89,11 +91,22 @@ fileClear.addEventListener('click', (e) => {
 });
 
 function checkBackendConfigured() {
-  if (!BACKEND_URL || BACKEND_URL.includes('PASTE_YOUR_RENDER_URL_HERE')) {
+  if (!BACKEND_URL || BACKEND_URL.includes('https://passionprojbackend-1.onrender.com')) {
     showError('This site is not fully set up yet — the backend URL is missing from config.js.');
     return false;
   }
   return true;
+}
+
+// Wakes the backend up with a lightweight ping before uploading.
+// If the backend is sleeping, this gives it time to start before the
+// actual upload request hits it.
+async function wakeBackend() {
+  try {
+    await fetch(`${BACKEND_URL}/`, { signal: AbortSignal.timeout(60000) });
+  } catch (_) {
+    // Ignore — we'll let the upload itself surface any real errors.
+  }
 }
 
 submitBtn.addEventListener('click', async () => {
@@ -102,13 +115,28 @@ submitBtn.addEventListener('click', async () => {
   clearError();
   resultBlock.classList.remove('show');
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Uploading…';
+  submitBtn.textContent = 'Waking up server…';
   progressBlock.classList.add('show');
   progressFill.style.width = '0%';
   progressPct.textContent = '0';
+  progressLabel.textContent = 'Starting up';
+  statusLine.textContent = 'The server may be waking from sleep — this can take up to 60 seconds on first use.';
+  setSkeletonState(true);
+
+  // Set a timer: if still at 0% after 70 seconds, show a helpful message
+  wakeUpTimer = setTimeout(() => {
+    statusLine.textContent = 'Still waking up… Render\'s free tier can take a minute. Hang tight.';
+  }, 20000);
+
+  // Ping the backend first to wake it up
+  await wakeBackend();
+
+  clearTimeout(wakeUpTimer);
+  wakeUpTimer = null;
+
+  submitBtn.textContent = 'Uploading…';
   progressLabel.textContent = 'Uploading video';
   statusLine.textContent = 'Sending your file to the server.';
-  setSkeletonState(true);
 
   const formData = new FormData();
   formData.append('file', selectedFile);
@@ -117,6 +145,7 @@ submitBtn.addEventListener('click', async () => {
     const res = await fetch(`${BACKEND_URL}/process-video/`, {
       method: 'POST',
       body: formData,
+      signal: AbortSignal.timeout(120000), // 2 min upload timeout
     });
 
     if (!res.ok) {
@@ -131,8 +160,10 @@ submitBtn.addEventListener('click', async () => {
 
   } catch (err) {
     showError(
-      err.message === 'Failed to fetch'
-        ? "Couldn't reach the server. It may be waking up from sleep — wait 30 seconds and try again."
+      err.name === 'TimeoutError'
+        ? 'The server took too long to respond. Try again in a moment — it may still be waking up.'
+        : err.message === 'Failed to fetch'
+        ? "Couldn't reach the server. Wait 30 seconds and try again."
         : err.message
     );
   }
