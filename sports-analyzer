@@ -1,0 +1,12 @@
+sports-analyzer/
+│
+├── frontend/
+│   ├── index.html
+│   ├── style.css
+│   └── script.js
+│
+├── backend/
+│   ├── app.py
+│   └── uploads/
+│
+└── README.md
