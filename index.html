@@ -8,13 +8,13 @@
     
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.2/pose.js" crossorigin="anonymous"></script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-6">
 
     <div class="max-w-3xl w-full bg-gray-800 p-8 rounded-xl shadow-2xl text-center border border-gray-700">
         <h1 class="text-3xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-            PoseSkeleton AI (100% Client-Side)
+            PoseSkeleton AI
         </h1>
         <p class="text-gray-400 text-sm mb-6">Upload a local video file to track and project human poses directly in your browser.</p>
 
@@ -28,7 +28,7 @@
         </div>
 
         <div class="relative w-full max-w-xl mx-auto hidden bg-black rounded-lg overflow-hidden border border-gray-700" id="videoContainer">
-            <video id="inputVideo" class="hidden" controls muted></video>
+            <video id="inputVideo" class="hidden" controls muted playsinline></video>
             <canvas id="outputCanvas" class="w-full h-auto block"></canvas>
         </div>
         
@@ -45,9 +45,9 @@
         const fileNameElement = document.getElementById('fileName');
         const statusMsg = document.getElementById('statusMsg');
 
-        // Initialize MediaPipe Pose Model
+        // Pinned to stable @0.2 path to avoid version mismatch errors
         const pose = new Pose({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.2/${file}`
         });
 
         pose.setOptions({
@@ -57,22 +57,54 @@
             minTrackingConfidence: 0.5
         });
 
-        // Event handler running every time MediaPipe finishes calculating a frame
         pose.onResults((results) => {
-            // Draw original frame to canvas
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
             canvasCtx.drawImage(results.image, 0, 0, outputCanvas.width, outputCanvas.height);
 
-            // Overlay Skeleton Joint Points and Connectors
             if (results.poseLandmarks) {
-                drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 4});
-                drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#FF0000', lineWidth: 2, radius: 4});
+                // Uses standard MediaPipe window drawing helpers safely
+                window.drawConnectors(canvasCtx, results.poseLandmarks, window.POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 4});
+                window.drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#FF0000', lineWidth: 2, radius: 4});
             }
             canvasCtx.restore();
         });
 
-        // Listen for file selections
         videoInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
+
+            fileNameElement.textContent = `Processing: ${file.name}`;
+            fileNameElement.classList.remove('hidden');
+            dropzoneText.classList.add('hidden');
+            statusMsg.classList.remove('hidden');
+            statusMsg.textContent = "Initializing AI tracking...";
+
+            const fileURL = URL.createObjectURL(file);
+            inputVideo.src = fileURL;
+
+            inputVideo.onloadeddata = () => {
+                outputCanvas.width = inputVideo.videoWidth;
+                outputCanvas.height = inputVideo.videoHeight;
+                videoContainer.classList.remove('hidden');
+                statusMsg.textContent = "Tracking motion coordinates live...";
+                inputVideo.play();
+                updateFrame();
+            };
+        });
+
+        async function updateFrame() {
+            if (!inputVideo.paused && !inputVideo.ended) {
+                try {
+                    await pose.send({ image: inputVideo });
+                } catch (err) {
+                    console.error("Frame skip context:", err);
+                }
+                requestAnimationFrame(updateFrame);
+            } else if (inputVideo.ended) {
+                statusMsg.textContent = "Finished processing!";
+            }
+        }
+    </script>
+</body>
+</html>
