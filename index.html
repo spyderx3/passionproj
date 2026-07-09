@@ -43,8 +43,7 @@
         const loading = document.getElementById('loading');
 
         // Change this URL to your deployed backend URL when you launch live!
-        const BACKEND_URL = "https://passionprojbackend.onrender.com";
-
+        const BACKEND_URL = "https://passionprojbackend.onrender.com/api/upload";
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 fileNameElement.textContent = `Selected: ${e.target.files[0].name}`;
